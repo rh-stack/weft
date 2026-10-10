@@ -94,19 +94,19 @@
     color: inherit;
   }
   .elabel:hover {
-    background: rgba(79, 124, 255, 0.12);
-    color: #2f54c9;
+    background: var(--accent-soft);
+    color: var(--link);
   }
   .elabel.ghost {
     color: #98a2b3;
     border-style: dashed;
-    border-color: #d8dae0;
+    border-color: var(--border);
   }
   .elabel-edit {
     width: 140px;
-    background: #fff;
+    background: var(--panel);
     border-color: var(--accent, #4f7cff);
-    color: #1c2333;
+    color: var(--text);
   }
   .elabel-edit:focus {
     outline: none;

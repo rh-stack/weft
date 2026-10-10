@@ -8,6 +8,7 @@
   import { get } from 'svelte/store';
   import LockSync from './lib/LockSync.svelte';
   import FlowHotkeys from './lib/FlowHotkeys.svelte';
+  import { theme, toggleTheme } from './lib/theme';
   import { flip } from 'svelte/animate';
   import { fetchState, saveState, slug, NODE_COLORS, type StateResponse, type Area, type Edge, type NodeFull } from './lib/api';
   import { computeSnap, readNodeSizesFromDom, SNAP_SCREEN_PX, type SnapGuide, type SnapSize } from './lib/snap';
@@ -540,6 +541,11 @@
       showHelp = !showHelp;
       return;
     }
+    if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      toggleTheme();
+      return;
+    }
     if (showHelp) return;
     if (isUndoKey(e)) {
       e.preventDefault();
@@ -726,7 +732,7 @@
 
 <svelte:window on:keydown={onKey} />
 
-{#if error}<div style="padding:6px 14px;background:#fef3f2;color:#b42318;font-size:12px">{error} <button class="btn" on:click={() => (error = '')}>x</button></div>{/if}
+{#if error}<div style="padding:6px 14px;background:var(--danger-soft);color:var(--danger-text);font-size:12px">{error} <button class="btn" on:click={() => (error = '')}>x</button></div>{/if}
 
 {#if !state}
   <div style="padding:20px">Loading…</div>
@@ -740,6 +746,8 @@
       {edgeTypes}
       fitView
       fitViewOptions={{ padding: 0.3 }}
+      colorMode={$theme}
+      ariaLabelConfig={{ 'controls.fitView.ariaLabel': 'Fit view (F)', 'controls.interactive.ariaLabel': 'Toggle interactivity (L)' }}
       nodesDraggable={!locked}
       nodesConnectable={!locked}
       elementsSelectable={!locked}
@@ -756,6 +764,17 @@
       onconnect={onConnect}
     >
       <Controls showZoom={false} fitViewOptions={{ padding: 0.3 }}>
+        <ControlButton
+          onclick={toggleTheme}
+          title="{$theme === 'dark' ? 'Light' : 'Dark'} mode (T)"
+          aria-label="Toggle dark mode"
+        >
+          {#if $theme === 'dark'}
+            <svg viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="16" cy="16" r="5" /><path d="M16 3v3M16 26v3M3 16h3M26 16h3M7 7l2 2M23 23l2 2M7 25l2-2M23 9l2-2" /></svg>
+          {:else}
+            <svg viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M26 19A11 11 0 0 1 13 6a11 11 0 1 0 13 13z" /></svg>
+          {/if}
+        </ControlButton>
         <ControlButton onclick={() => (showHelp = true)} title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</ControlButton>
       </Controls>
       <Background variant={BackgroundVariant.Dots} />
@@ -889,7 +908,7 @@
   {#if n}
     <div class="overlay" on:click|self={closeNotes}>
       <div class="sheet">
-        <div class="sheet-stripe" style="background: {editColor ?? '#e4e7ec'}"></div>
+        <div class="sheet-stripe" style="background: {editColor ?? 'var(--stripe-default)'}"></div>
         <div class="sheet-top">
           <input class="title" bind:value={editTitle} on:input={queueNotesSave} placeholder="Title" title="Click to rename" />
           <button class="btn" on:click={() => (showHelp = true)} title="Keyboard shortcuts (?)">?</button>
@@ -995,6 +1014,7 @@
         <div class="help-row"><dt><kbd>/</kbd></dt><dd>Focus search</dd></div>
         <div class="help-row"><dt><kbd>F</kbd></dt><dd>Fit view to all nodes</dd></div>
         <div class="help-row"><dt><kbd>L</kbd></dt><dd>Lock or unlock canvas</dd></div>
+        <div class="help-row"><dt><kbd>T</kbd></dt><dd>Switch dark and light mode</dd></div>
         <div class="help-row"><dt><kbd>Delete</kbd> <kbd>⌫</kbd></dt><dd>Delete selected node, area, or edge</dd></div>
         <div class="help-row"><dt><kbd>D</kbd></dt><dd>Delete selected edge</dd></div>
         <div class="help-row"><dt><kbd>R</kbd></dt><dd>Rename selected edge</dd></div>
@@ -1017,7 +1037,7 @@
   .snapguide { position: absolute; background: #f04438; pointer-events: none; }
   .snapguide.v { width: 1px; }
   .snapguide.h { height: 1px; }
-  .help-sheet { width: min(460px, 94vw); max-height: 84vh; overflow: auto; background: var(--panel); border-radius: 14px; padding: 18px 22px 14px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3); }
+  .help-sheet { width: min(460px, 94vw); max-height: 84vh; overflow: auto; background: var(--panel); border-radius: 14px; padding: 18px 22px 14px; box-shadow: var(--shadow-xl); }
   .help-head { margin-bottom: 8px; }
   .help-head h2 { margin: 0 0 2px; font-size: 16px; font-weight: 600; }
   .keys { margin: 0; }
@@ -1026,5 +1046,5 @@
   .help-row dt { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
   .help-row dd { margin: 0; color: var(--text); }
   .help-note { margin: 12px 0 0; }
-  kbd { display: inline-block; min-width: 22px; text-align: center; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; background: #f6f7f9; font-family: inherit; font-size: 12px; line-height: 1.5; }
+  kbd { display: inline-block; min-width: 22px; text-align: center; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; background: var(--field); font-family: inherit; font-size: 12px; line-height: 1.5; }
 </style>

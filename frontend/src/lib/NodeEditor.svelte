@@ -79,7 +79,28 @@
 <style>
   .milk :global(.milkdown) {
     font: 14px/1.65 system-ui, sans-serif;
-    color: #1c2333;
+    color: var(--text);
+  }
+  /* Crepe dark palette, scoped to the dark theme. The stock classic-dark
+     sheet cannot load next to the light one, so its colors are copied here. */
+  :global(:root[data-theme='dark']) .milk :global(.milkdown) {
+    --crepe-color-background: #1f1b16;
+    --crepe-color-on-background: #eae1d9;
+    --crepe-color-surface: #18120b;
+    --crepe-color-surface-low: #201b13;
+    --crepe-color-on-surface: #ede0d4;
+    --crepe-color-on-surface-variant: #d3c4b4;
+    --crepe-color-outline: #9c8f80;
+    --crepe-color-primary: #f4bd6f;
+    --crepe-color-secondary: #56442a;
+    --crepe-color-on-secondary: #fbdebc;
+    --crepe-color-inverse: #ede0d4;
+    --crepe-color-on-inverse: #362f27;
+    --crepe-color-inline-code: #ffb4ab;
+    --crepe-color-error: #ffb4ab;
+    --crepe-color-hover: #251f17;
+    --crepe-color-selected: #3b342b;
+    --crepe-color-inline-area: #3f3830;
   }
   .milk :global(.milkdown) {
     background: transparent;
@@ -99,7 +120,7 @@
   }
   .milk :global(.milkdown img) {
     border-radius: 8px;
-    border: 1px solid #e4e7ec;
+    border: 1px solid var(--img-border);
   }
   .milk :global(.milkdown code) {
     font-family: ui-monospace, Consolas, monospace;

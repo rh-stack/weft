@@ -5,8 +5,61 @@
   --muted: #667085;
   --border: #d8dae0;
   --accent: #4f7cff;
+  --input-bg: #ffffff;
+  --sheet: #faf7f2;
+  --field: #f6f7f9;
+  --chip: #f2f4f7;
+  --hover-bg: #eef2ff;
+  --accent-soft: rgba(79, 124, 255, 0.12);
+  --link: #2f54c9;
+  --link-line: rgba(47, 84, 201, 0.35);
+  --row-hover: #eef1f6;
+  --row-focus: #e9eefb;
+  --divider: #dfe2e8;
+  --danger-text: #b42318;
+  --danger-soft: rgba(180, 35, 24, 0.08);
+  --kid-bg: rgba(255, 255, 255, 0.7);
+  --kid-border: rgba(16, 24, 40, 0.14);
+  --area-border: #c3ccd8;
+  --img-border: #e4e7ec;
+  --stripe-default: #e4e7ec;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow: 0 4px 14px rgba(16, 24, 40, 0.1);
+  --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.16);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.3);
   color-scheme: light;
   --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+}
+:root[data-theme='dark'] {
+  --bg: #15181f;
+  --panel: #1d2129;
+  --text: #e4e7ec;
+  --muted: #98a2b3;
+  --border: #353b47;
+  --accent: #6b8fff;
+  --input-bg: #161a21;
+  --sheet: #1a1d24;
+  --field: #252a33;
+  --chip: #2a303b;
+  --hover-bg: #26304a;
+  --accent-soft: rgba(107, 143, 255, 0.18);
+  --link: #9db4ff;
+  --link-line: rgba(157, 180, 255, 0.35);
+  --row-hover: #242932;
+  --row-focus: #22304d;
+  --divider: #3a414d;
+  --danger-text: #ff8a80;
+  --danger-soft: rgba(255, 138, 128, 0.12);
+  --kid-bg: rgba(40, 46, 56, 0.7);
+  --kid-border: rgba(255, 255, 255, 0.14);
+  --area-border: #4a5160;
+  --img-border: #3a414d;
+  --stripe-default: #3a414d;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body, #app { height: 100%; margin: 0; }
@@ -22,13 +75,13 @@ body { font: 14px/1.45 var(--font-ui); color: var(--text); background: var(--bg)
 input, select, textarea, button { font: inherit; }
 input, select, textarea {
   padding: 6px 8px; border: 1px solid var(--border);
-  border-radius: 6px; background: #fff; color: var(--text);
+  border-radius: 6px; background: var(--input-bg); color: var(--text);
 }
 button { cursor: default; transition: background 0.12s, border-color 0.12s, color 0.12s; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .island input:focus-visible, .sheet-top input.title:focus-visible { outline: none; }
 .btn {
-  border: 1px solid var(--border); background: #fff; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--panel); border-radius: 6px;
   padding: 5px 10px;
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -37,7 +90,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .island {
   position: absolute; top: 12px; left: 12px; z-index: 10;
   background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.1); padding: 8px; width: 260px;
+  box-shadow: var(--shadow); padding: 8px; width: 260px;
 }
 .island input { width: 100%; border: none; background: transparent; padding: 4px 2px; }
 .island input:focus { outline: none; }
@@ -51,24 +104,24 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   display: block; width: 100%; text-align: left; border: none;
   background: transparent; border-radius: 6px; padding: 4px 8px;
 }
-.result:hover { background: #eef2ff; color: var(--accent); }
+.result:hover { background: var(--hover-bg); color: var(--accent); }
 /* areas live as a background layer above the pane but under UI.
    Boxes ignore clicks. Only the grips take input. */
 .arealayer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; }
-.areabox { position: absolute; pointer-events: none; background: rgba(148, 163, 184, 0.07); border: 1px dashed #c3ccd8; border-radius: 10px; }
+.areabox { position: absolute; pointer-events: none; background: rgba(148, 163, 184, 0.07); border: 1px dashed var(--area-border); border-radius: 10px; }
 .areabox.selected { border-color: var(--accent); border-style: solid; }
 /* label button and rename input share one box, so the text does not move on click */
 .alabel, .alabel-edit {
   position: absolute; bottom: 8px; left: 10px; box-sizing: border-box; height: 24px; margin: 0; padding: 0 5px;
-  font-size: 12px; font-weight: 600; line-height: 20px; color: #667085;
+  font-size: 12px; font-weight: 600; line-height: 20px; color: var(--muted);
   background: none; border: 1px solid transparent; border-radius: 4px; pointer-events: auto;
 }
-.alabel:hover { background: rgba(79, 124, 255, 0.12); color: #2f54c9; }
-.alabel-edit { width: 180px; background: #fff; border-color: var(--accent); color: var(--text); }
+.alabel:hover { background: var(--accent-soft); color: var(--link); }
+.alabel-edit { width: 180px; background: var(--input-bg); border-color: var(--accent); color: var(--text); }
 .alabel-edit:focus, .alabel-edit:focus-visible { outline: none; }
 .grip {
   position: absolute; top: 4px; left: 4px; width: 20px; height: 20px;
-  pointer-events: auto; background-color: #fff; border: 1px solid var(--border); border-radius: 4px;
+  pointer-events: auto; background-color: var(--panel); border: 1px solid var(--border); border-radius: 4px;
   background-size: 7px 10.5px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='21'%3E%3Cg fill='%2398a2b3'%3E%3Ccircle cx='3.5' cy='3.5' r='1.8'/%3E%3Ccircle cx='10.5' cy='3.5' r='1.8'/%3E%3Ccircle cx='3.5' cy='10.5' r='1.8'/%3E%3Ccircle cx='10.5' cy='10.5' r='1.8'/%3E%3Ccircle cx='3.5' cy='17.5' r='1.8'/%3E%3Ccircle cx='10.5' cy='17.5' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
   background-position: center;
@@ -94,10 +147,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .ctxmenu {
   position: fixed; z-index: 50; background: var(--panel);
   border: 1px solid var(--border); border-radius: 10px; padding: 6px; min-width: 200px;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+  box-shadow: var(--shadow-lg);
 }
 .ctxmenu button { display: block; width: 100%; text-align: left; border: none; background: none; padding: 7px 10px; border-radius: 6px; }
-.ctxmenu button:hover { background: #eef2ff; color: var(--accent); }
+.ctxmenu button:hover { background: var(--hover-bg); color: var(--accent); }
 .ctxmenu input, .ctxmenu select { width: 100%; margin: 4px 0; }
 /* notes popover: 80% of screen, centered notion-style column */
 .overlay {
@@ -105,8 +158,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
 .sheet {
-  width: min(880px, 94vw); height: 88vh; background: #faf7f2; border-radius: 16px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; overflow: hidden;
+  width: min(880px, 94vw); height: 88vh; background: var(--sheet); border-radius: 16px;
+  box-shadow: var(--shadow-xl); display: flex; flex-direction: column; overflow: hidden;
 }
 .sheet-top {
   display: flex; gap: 10px; align-items: center; padding: 10px 16px;
@@ -114,14 +167,14 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .meta-card {
   display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end;
-  background: #ffffff; border-radius: 10px;
+  background: var(--panel); border-radius: 10px;
   padding: 10px 12px; margin-bottom: 16px;
 }
 .meta-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .meta-card input.type-input,
 .meta-card select.parent-select {
-  width: 100%; height: 30px; font-size: 13px; color: var(--text); background: #f6f7f9;
+  width: 100%; height: 30px; font-size: 13px; color: var(--text); background: var(--field);
   border: 1px solid transparent; border-radius: 6px; padding: 5px 8px;
 }
 .meta-card input.type-input:hover, .meta-card select.parent-select:hover { border-color: var(--border); }
@@ -129,7 +182,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .meta-card .colorrow { margin: 0; gap: 6px; height: 30px; }
 .meta-card .sw { width: 20px; height: 20px; }
 .sheet-top input.title { flex: 1; font-size: 16px; font-weight: 650; border: none; border-radius: 6px; padding: 2px 6px; margin-left: -6px; background: transparent; }
-.sheet-top input.title:hover { background: #f6f7f9; }
+.sheet-top input.title:hover { background: var(--field); }
 .sheet-top input.title:focus { outline: 1px solid var(--accent); border-radius: 6px; }
 .doc { flex: 1; overflow: auto; }
 .doc-inner { padding: 22px 30px 60px 50px; }
@@ -137,10 +190,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .fields { display: grid; gap: 6px; margin-bottom: 14px; }
 .kv {
   position: relative; display: grid; grid-template-columns: auto 140px 1fr auto; gap: 8px; align-items: center;
-  background: #ffffff; border-radius: 8px; padding: 3px 4px 3px 8px;
+  background: var(--panel); border-radius: 8px; padding: 3px 4px 3px 8px;
   transition: background 0.15s, opacity 0.15s;
 }
-.kv:hover { background: #eef1f6; }
+.kv:hover { background: var(--row-hover); }
 .kvgrip {
   width: 12px; height: 20px; flex: none; cursor: grab; touch-action: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='21'%3E%3Cg fill='%23b6bcc7'%3E%3Ccircle cx='3.5' cy='3.5' r='1.8'/%3E%3Ccircle cx='10.5' cy='3.5' r='1.8'/%3E%3Ccircle cx='3.5' cy='10.5' r='1.8'/%3E%3Ccircle cx='10.5' cy='10.5' r='1.8'/%3E%3Ccircle cx='3.5' cy='17.5' r='1.8'/%3E%3Ccircle cx='10.5' cy='17.5' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
@@ -159,21 +212,21 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .stage.locked .svelte-flow__handle { display: none; }
 .kv input { border: none; background: transparent; padding: 5px 4px; width: 100%; font-size: 13px; }
 .kv input:nth-child(2) { color: var(--muted); font-weight: 600; }
-.kv input:nth-child(3) { border-left: 1px solid #dfe2e8; padding-left: 12px; border-radius: 0; }
+.kv input:nth-child(3) { border-left: 1px solid var(--divider); padding-left: 12px; border-radius: 0; }
 .kv input:focus { outline: none; }
-.kv:focus-within { background: #e9eefb; }
+.kv:focus-within { background: var(--row-focus); }
 .remove {
   width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
   border: none; border-radius: 6px; background: transparent; color: #98a2b3; padding: 0; opacity: 0.5;
   transition: background 0.12s, color 0.12s, opacity 0.12s;
 }
 .kv:hover .remove { opacity: 1; }
-.remove:hover { color: #b42318; background: rgba(180, 35, 24, 0.08); }
+.remove:hover { color: var(--danger-text); background: var(--danger-soft); }
 .fields > .btn { justify-self: start; border-style: dashed; }
 .colorrow { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
 .sw {
   width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border);
-  background: #fff; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--panel); padding: 0; display: inline-flex; align-items: center; justify-content: center;
   color: var(--muted); font-size: 12px;
 }
 .sw:hover { border-color: var(--accent); }
