@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 use axum::{
     body::Bytes,
     extract::{Path, State},
@@ -388,7 +390,7 @@ async fn main() {
 
     let port: u16 = std::env::var("PORT").ok().and_then(|v| v.parse().ok()).unwrap_or(3000);
     let addr = format!("0.0.0.0:{port}");
-    println!("homelab-map on {addr}");
+    println!("weft on {addr}");
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

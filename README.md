@@ -1,6 +1,6 @@
-# Homelab Map
+# Weft
 
-Small single user web app. Canvas of nodes plus notes pages. All state is text files. No database exists. No login exists in v1, so keep the app inside your tailnet.
+Small single user homelab map. Canvas of nodes plus notes pages. All state is text files. No database exists. No login exists in v1, so keep the app inside your tailnet.
 
 ## Layout
 
@@ -41,9 +41,9 @@ Build the frontend once and run the release binary. Keep `data/` on a backed up 
 ```
 cd frontend && npm install && npm run build
 cd ../backend && cargo build --release
-mkdir -p /srv/homelab-map && cp -r ../frontend/dist /srv/homelab-map/public
-cp -r ../seed /srv/homelab-map/data
-DATA_DIR=/srv/homelab-map/data PORT=3000 /srv/homelab-map/homelab-map-backend
+mkdir -p /srv/weft && cp -r ../frontend/dist /srv/weft/public
+cp -r ../seed /srv/weft/data
+DATA_DIR=/srv/weft/data PORT=3000 /srv/weft/weft
 ```
 
 The backend finds the SPA in `./public`, `/app/public`, `frontend/dist`, or `../frontend/dist`. Place the built files in one of those spots relative to your start folder. A simple systemd unit works for autostart. Point `ExecStart` at the binary and set `DATA_DIR` and `PORT` in `Environment`.
@@ -73,21 +73,21 @@ RUN cargo build --release
 FROM debian:bookworm-slim
 RUN useradd -m app && mkdir -p /app/public /app/seed /data && chown -R app:app /app /data
 COPY --from=web /web/dist /app/public
-COPY --from=api /api/target/release/homelab-map-backend /app/homelab-map
+COPY --from=api /api/target/release/weft /app/weft
 COPY seed/graph.yaml /app/seed/graph.yaml
 COPY seed/nodes /app/seed/nodes
 USER app
 WORKDIR /app
 ENV PORT=3000 DATA_DIR=/data
 EXPOSE 3000
-CMD sh -c 'if [ ! -f /data/graph.yaml ]; then cp /app/seed/graph.yaml /data/graph.yaml; mkdir -p /data/nodes /data/assets; cp /app/seed/nodes/*.md /data/nodes/; fi; exec /app/homelab-map'
+CMD sh -c 'if [ ! -f /data/graph.yaml ]; then cp /app/seed/graph.yaml /data/graph.yaml; mkdir -p /data/nodes /data/assets; cp /app/seed/nodes/*.md /data/nodes/; fi; exec /app/weft'
 ```
 
 Run it with a volume. First start seeds `/data` from the sample. Later starts keep the volume.
 
 ```
-docker build -t homelab-map:0.1.0 .
-docker run --rm -p 3000:3000 -v homelab-map-data:/data homelab-map:0.1.0
+docker build -t weft:0.1.0 .
+docker run --rm -p 3000:3000 -v weft-data:/data weft:0.1.0
 ```
 
 For k3s push the image to a registry your cluster can read, then create a 1 Gi PVC, a single replica Deployment with `DATA_DIR=/data` and the PVC mounted at `/data`, plus a ClusterIP Service on port 80 to target 3000. Keep the Service inside the tailnet.
@@ -112,3 +112,9 @@ For k3s push the image to a registry your cluster can read, then create a 1 Gi P
 - Add a node: add one entry in `graph.yaml` plus one file in `nodes/`.
 - Add an edge: add one entry under `edges` in `graph.yaml`.
 - The backend picks up disk changes and pushes a new `rev` over `/ws`.
+
+## License
+
+Copyright (C) 2026 rythm.
+
+Weft is free software. You can redistribute it and change it under the GNU General Public License version 3. The full text is in `LICENSE`.

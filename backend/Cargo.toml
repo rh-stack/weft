@@ -1,7 +1,9 @@
 [package]
-name = "homelab-map-backend"
+name = "weft"
 version = "0.1.0"
 edition = "2021"
+description = "Weft is a small single user homelab map with a canvas of nodes and notes pages."
+license = "GPL-3.0-only"
 
 [dependencies]
 axum = { version = "0.8", features = ["ws"] }

@@ -726,7 +726,7 @@
     </div>
     <div class="island">
       <div class="island-head">
-        <span class="brand"><img src="/logo.svg" alt="" width="18" height="18" />Homelab map</span>
+        <span class="brand"><img src="/logo.svg" alt="Weft logo" width="18" height="18" />Weft</span>
         <span class="status"><span class="dot {savedState}"></span>{savedState === 'saved' ? 'Saved' : savedState === 'editing' ? 'Editing' : savedState === 'saving' ? 'Saving' : savedState}</span>
       </div>
       <input
