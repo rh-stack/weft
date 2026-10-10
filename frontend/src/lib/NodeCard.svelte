@@ -29,10 +29,9 @@
   <Handle type="target" position={Position.Top} class="conn" />
   <Handle type="target" position={Position.Left} id="l" class="conn side" />
   <div class="head">
+    <span class="titletext">{data.title}</span>
     <span class="type">{data.ntype}</span>
-    <button class="openbtn" on:click|stopPropagation={() => open(data.id)} title="Open notes">notes</button>
   </div>
-  <span class="titletext">{data.title}</span>
   {#if entries.length}
     <dl>
       {#each entries as [k, v]}
@@ -76,21 +75,17 @@
   .card :global(button) { cursor: default; }
   .card.selected { border-color: #4f7cff; }
   .card.dimmed { opacity: 0.25; }
-  .head { display: flex; justify-content: space-between; align-items: center; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 4px 0 6px; }
   .type {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+    flex: none;
+    font-size: 10px; line-height: 18px; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.06em;
     color: #667085; background: #f2f4f7; border-radius: 4px; padding: 1px 6px;
   }
   .titletext {
-    font-size: 14px; font-weight: 650; margin: 4px 0 6px; padding: 0;
+    flex: 1; min-width: 0;
+    font-size: 14px; line-height: 20px; font-weight: 650; padding: 0;
     color: inherit; text-align: left; display: block; user-select: none;
   }
-  .openbtn {
-    border: 1px solid rgba(16, 24, 40, 0.14); background: rgba(255, 255, 255, 0.7);
-    border-radius: 6px; font-size: 11px; transition: background 0.12s, border-color 0.12s, color 0.12s;
-  }
-  .openbtn:hover { background: rgba(79, 124, 255, 0.14); border-color: #4f7cff; color: #2f54c9; }
-  .openbtn:active { background: rgba(79, 124, 255, 0.24); border-color: #2f54c9; color: #2f54c9; }
   dl { margin: 0; display: grid; gap: 2px; }
   .row { display: flex; gap: 8px; }
   dt { color: #667085; min-width: 52px; }

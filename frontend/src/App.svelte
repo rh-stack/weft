@@ -3,10 +3,12 @@
   import { SvelteFlow, Controls, ControlButton, Background, BackgroundVariant, ConnectionLineType } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
   import NodeCard from './lib/NodeCard.svelte';
+  import LabelEdge from './lib/LabelEdge.svelte';
   import LockSync from './lib/LockSync.svelte';
   import FlowHotkeys from './lib/FlowHotkeys.svelte';
   import { flip } from 'svelte/animate';
   import { fetchState, saveState, slug, NODE_COLORS, type StateResponse, type Area, type Edge, type NodeFull } from './lib/api';
+  import { computeSnap, readNodeSizesFromDom, SNAP_SCREEN_PX, type SnapGuide, type SnapSize } from './lib/snap';
   // Milkdown is heavy, so it loads on first notes open. Canvas stays lean.
   let EditorComp: any = null;
   function ensureEditor() {
@@ -14,6 +16,7 @@
   }
 
   const nodeTypes = { card: NodeCard };
+  const edgeTypes = { labelEdge: LabelEdge };
   let flowNodes: any[] = [];
   let flowEdges: any[] = [];
 
@@ -81,20 +84,29 @@
 
   // right-click menu
   let menu: { x: number; y: number; kind: 'pane' | 'node' | 'area'; nodeId?: string; areaId?: string } | null = null;
-  // edge label inline edit + last mouse spot on canvas
-  let editingEdge: { id: string; x: number; y: number } | null = null;
-  let edgeLabelVal = '';
-  let mouse = { x: 0, y: 0 };
-  function commitEdgeLabel() {
-    if (!state || !editingEdge) {
-      editingEdge = null;
-      return;
-    }
-    const t = edgeLabelVal.trim();
-    state.edges = state.edges.map((e) => (e.id === editingEdge!.id ? { ...e, label: t } : e));
+  // Edge label inline edit. The caption swaps for an input in place.
+  let editingEdge: { id: string } | null = null;
+  function startEdgeEdit(id: string) {
+    if (locked || !state) return;
+    if (!state.edges.some((e) => e.id === id)) return;
+    selectedEdgeId = id;
+    selectedId = null;
+    selectedAreaId = null;
+    editingEdge = { id };
+    rebuildFlow();
+  }
+  function commitEdge(id: string, value: string) {
+    if (!state || !editingEdge || editingEdge.id !== id) return;
+    const t = value.trim();
+    state.edges = state.edges.map((e) => (e.id === id ? { ...e, label: t } : e));
     editingEdge = null;
     rebuildFlow();
     scheduleSave();
+  }
+  function cancelEdgeEdit(id: string) {
+    if (!editingEdge || editingEdge.id !== id) return;
+    editingEdge = null;
+    rebuildFlow();
   }
 
   // area inline rename
@@ -176,13 +188,13 @@
     }));
     flowEdges = state.edges.map((e) => ({
       id: e.id,
-      type: 'smoothstep',
+      type: 'labelEdge',
       source: e.from,
       target: e.to,
       label: e.label ?? '',
       sourceHandle: e.sourceHandle ?? null,
       targetHandle: e.targetHandle ?? null,
-      pathOptions: { borderRadius: 8 },
+      data: { editing: editingEdge?.id === e.id, locked },
     }));
     lastSynced = snapshot();
   }
@@ -227,14 +239,22 @@
     }
   }
 
+  // Smart guides and live drag state.
+  let guides: SnapGuide[] = [];
+  let nodeSizes = new Map<string, SnapSize>();
+
+  function snapThreshold(): number {
+    return SNAP_SCREEN_PX / (viewport.zoom || 1);
+  }
+
   function syncNodesFromFlow(): boolean {
     if (!state) return false;
     const byId = new Map(flowNodes.map((n: any) => [n.id, n]));
     for (const n of state.nodes) {
       const f = byId.get(n.id) as any;
       if (f?.position) {
-        n.x = Math.round(f.position.x);
-        n.y = Math.round(f.position.y);
+        n.x = Math.round(f.position.x * 2) / 2;
+        n.y = Math.round(f.position.y * 2) / 2;
       }
     }
     const now = snapshot();
@@ -248,11 +268,52 @@
   function onDragStart() {
     dragging = true;
     menu = null;
+    guides = [];
+    if (flowWrap) nodeSizes = readNodeSizesFromDom(flowWrap);
     if (syncTimer) clearTimeout(syncTimer);
   }
 
-  function onDragStop() {
+  function onNodeDrag(e: any) {
+    const dragged: any[] = e?.nodes ?? (e?.targetNode ? [e.targetNode] : []);
+    if (!dragged.length) {
+      guides = [];
+      return;
+    }
+    // XYFlow sets flowNodes to unsnapped spots just before this fires.
+    // Snap again each move so the display stays aligned.
+    const ids = new Set<string>(dragged.map((n: any) => n.id));
+    const merged = flowNodes.map((n: any) => {
+      const fresh = dragged.find((d: any) => d.id === n.id);
+      return fresh?.position ? { ...n, position: fresh.position } : n;
+    });
+    const r = computeSnap(ids, merged, nodeSizes, snapThreshold());
+    guides = r.guides;
+    if (r.dx === 0 && r.dy === 0) return;
+    flowNodes = merged.map((n: any) =>
+      ids.has(n.id) ? { ...n, position: { x: n.position.x + r.dx, y: n.position.y + r.dy } } : n,
+    );
+  }
+
+  function onDragStop(e: any) {
     dragging = false;
+    // XYFlow writes unsnapped spots back on release, so snap once more.
+    // Use the event spots as the base. Do not trust the bound array timing here.
+    const dragged: any[] = e?.nodes ?? (e?.targetNode ? [e.targetNode] : []);
+    if (dragged.length) {
+      const ids = new Set<string>(dragged.map((n: any) => n.id));
+      const merged = flowNodes.map((n: any) => {
+        const fresh = dragged.find((d: any) => d.id === n.id);
+        return fresh?.position ? { ...n, position: fresh.position } : n;
+      });
+      const r = computeSnap(ids, merged, nodeSizes, snapThreshold());
+      flowNodes =
+        r.dx === 0 && r.dy === 0
+          ? merged
+          : merged.map((n: any) =>
+              ids.has(n.id) ? { ...n, position: { x: n.position.x + r.dx, y: n.position.y + r.dy } } : n,
+            );
+    }
+    guides = [];
     // The flow commits final positions to the bound array just after
     // dragstop fires, so read them on the next tick.
     deferredSync();
@@ -484,10 +545,7 @@
     }
     if ((e.key === 'r' || e.key === 'R') && !openId && !editingEdge && selectedEdgeId) {
       e.preventDefault();
-      const edge = state?.edges.find((x) => x.id === selectedEdgeId);
-      editingEdge = { id: selectedEdgeId, x: mouse.x, y: mouse.y };
-      edgeLabelVal = edge?.label ?? '';
-      requestAnimationFrame(() => document.querySelector<HTMLElement>('.edgelabel-edit')?.focus());
+      startEdgeEdit(selectedEdgeId);
     }
     if ((e.key === 'd' || e.key === 'D') && !openId && !editingEdge && selectedEdgeId && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault();
@@ -620,7 +678,7 @@
         try {
           const j = JSON.parse(msg.data);
           if (typeof j.rev === 'number' && j.rev !== rev && !dirty) {
-            if (dragging || openId || areaOp) pendingReload = true;
+            if (dragging || openId || areaOp || editingEdge) pendingReload = true;
             else await load();
           }
         } catch { /* keep old state */ }
@@ -638,6 +696,9 @@
 
   onMount(() => {
     window.addEventListener('open-node', ((e: CustomEvent<string>) => openNotes(e.detail)) as EventListener);
+    window.addEventListener('edit-edge', ((e: CustomEvent<string>) => startEdgeEdit(e.detail)) as EventListener);
+    window.addEventListener('commit-edge', ((e: CustomEvent<{ id: string; value: string }>) => commitEdge(e.detail.id, e.detail.value)) as EventListener);
+    window.addEventListener('cancel-edge', ((e: CustomEvent<string>) => cancelEdgeEdit(e.detail)) as EventListener);
     window.addEventListener('pointerdown', onWinDown, true);
     load();
     connectWs();
@@ -655,21 +716,23 @@
 {#if !state}
   <div style="padding:20px">Loading…</div>
 {:else}
-  <div class="stage" class:locked bind:this={flowWrap} on:contextmenu={onStageMenu} on:mousemove={(e) => (mouse = { x: e.clientX, y: e.clientY })}>
+  <div class="stage" class:locked bind:this={flowWrap} on:contextmenu={onStageMenu}>
     <SvelteFlow
       bind:nodes={flowNodes}
       bind:edges={flowEdges}
       bind:viewport
       {nodeTypes}
+      {edgeTypes}
       fitView
       fitViewOptions={{ padding: 0.3 }}
       nodesDraggable={!locked}
       nodesConnectable={!locked}
       elementsSelectable={!locked}
       deleteKey={null}
-      defaultEdgeOptions={{ type: 'smoothstep' }}
+      defaultEdgeOptions={{ type: 'labelEdge' }}
       connectionLineType={ConnectionLineType.SmoothStep}
       onnodedragstart={onDragStart}
+      onnodedrag={onNodeDrag}
       onnodedragstop={onDragStop}
       onnodeclick={onNodeClick}
       onedgeclick={onEdgeClick}
@@ -681,7 +744,7 @@
         <ControlButton onclick={() => (showHelp = true)} title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</ControlButton>
       </Controls>
       <Background variant={BackgroundVariant.Dots} />
-      <LockSync onlock={(v) => (locked = v)} />
+      <LockSync onlock={(v) => { locked = v; rebuildFlow(); }} />
       <FlowHotkeys disabled={openId !== null || showHelp} />
     </SvelteFlow>
     <div class="arealayer">
@@ -724,6 +787,21 @@
         </div>
       {/each}
     </div>
+    <div class="snaplayer">
+      {#each guides as g}
+        {#if g.orientation === 'v'}
+          <div
+            class="snapguide v"
+            style="left:{viewport.x + g.pos * viewport.zoom}px;top:{viewport.y + g.from * viewport.zoom}px;height:{Math.max(0, (g.to - g.from) * viewport.zoom)}px;"
+          ></div>
+        {:else}
+          <div
+            class="snapguide h"
+            style="top:{viewport.y + g.pos * viewport.zoom}px;left:{viewport.x + g.from * viewport.zoom}px;width:{Math.max(0, (g.to - g.from) * viewport.zoom)}px;"
+          ></div>
+        {/if}
+      {/each}
+    </div>
     <div class="island">
       <div class="island-head">
         <span class="brand"><img src="/logo.svg" alt="Weft logo" width="18" height="18" />Weft</span>
@@ -754,19 +832,6 @@
       {/if}
     </div>
   </div>
-{/if}
-
-{#if editingEdge}
-  <input
-    class="edgelabel-edit"
-    style="left:{editingEdge.x}px;top:{editingEdge.y}px;"
-    bind:value={edgeLabelVal}
-    on:blur={commitEdgeLabel}
-    on:keydown={(e) => {
-      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-      if (e.key === 'Escape') editingEdge = null;
-    }}
-  />
 {/if}
 
 {#if menu && state}
@@ -936,6 +1001,10 @@
   .stage :global(.svelte-flow__node) { cursor: default; }
   .stage :global(.svelte-flow__node button) { cursor: default; }
   .stage :global(.svelte-flow__handle) { cursor: crosshair; }
+  .snaplayer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 8; }
+  .snapguide { position: absolute; background: #f04438; pointer-events: none; }
+  .snapguide.v { width: 1px; }
+  .snapguide.h { height: 1px; }
   .help-sheet { width: min(460px, 94vw); max-height: 84vh; overflow: auto; background: var(--panel); border-radius: 14px; padding: 18px 22px 14px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3); }
   .help-head { margin-bottom: 8px; }
   .help-head h2 { margin: 0 0 2px; font-size: 16px; font-weight: 600; }

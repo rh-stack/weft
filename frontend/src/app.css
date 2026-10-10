@@ -66,12 +66,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .alabel:hover { background: rgba(79, 124, 255, 0.12); color: #2f54c9; }
 .alabel-edit { width: 180px; background: #fff; border-color: var(--accent); color: var(--text); }
 .alabel-edit:focus, .alabel-edit:focus-visible { outline: none; }
-.edgelabel-edit {
-  position: absolute; z-index: 30; transform: translate(-50%, -130%);
-  font-size: 12px; border: 1px solid var(--accent); border-radius: 6px;
-  padding: 4px 8px; width: 170px; box-shadow: 0 4px 12px rgba(16, 24, 40, 0.15);
-}
-.edgelabel-edit:focus { outline: none; }
 .grip {
   position: absolute; top: 4px; left: 4px; width: 20px; height: 20px;
   pointer-events: auto; background-color: #fff; border: 1px solid var(--border); border-radius: 4px;
