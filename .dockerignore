@@ -1,0 +1,12 @@
+.git/
+data/
+data-backup*/
+backend/target/
+frontend/node_modules/
+frontend/dist/
+docs/
+.env
+.DS_Store
+*.swp
+.idea/
+.vscode/

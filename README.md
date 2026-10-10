@@ -6,8 +6,9 @@ Small single user homelab map. Canvas of nodes plus notes pages. All state is te
 
 - `frontend/` is Svelte 5 plus Svelte Flow plus TypeScript. It builds a static SPA.
 - `backend/` is Rust plus Axum. It serves the SPA and a JSON API. It reads and writes `data/`.
+- `Dockerfile` plus `.dockerignore` build a self-contained image. See Container image.
 - `seed/` holds sample data. Copy it to `data/` on first setup.
-- `data/` holds live state and stays out of git. `data/graph.yaml` holds areas, node positions, parents, edges. `data/nodes/*.md` holds one node each. Top block holds id, title, type, fields. Body is Markdown notes. `data/assets/` holds uploaded images, served under `/uploads/`.
+- `data/` holds live state and stays out of git. `data/graph.yaml` holds areas, node positions, parents, edges. `data/nodes/*.md` holds one node each. Top block holds id, title, type, color, fields. Body is Markdown notes. `data/assets/` holds uploaded images, served under `/uploads/`.
 
 ## First run on any machine
 
@@ -42,55 +43,45 @@ Build the frontend once and run the release binary. Keep `data/` on a backed up 
 cd frontend && npm install && npm run build
 cd ../backend && cargo build --release
 mkdir -p /srv/weft && cp -r ../frontend/dist /srv/weft/public
-cp -r ../seed /srv/weft/data
+cp target/release/weft /srv/weft/weft
+if [ ! -f /srv/weft/data/graph.yaml ]; then cp -r ../seed /srv/weft/data; fi
 DATA_DIR=/srv/weft/data PORT=3000 /srv/weft/weft
 ```
 
-The backend finds the SPA in `./public`, `/app/public`, `frontend/dist`, or `../frontend/dist`. Place the built files in one of those spots relative to your start folder. A simple systemd unit works for autostart. Point `ExecStart` at the binary and set `DATA_DIR` and `PORT` in `Environment`.
+Copy the seed only on first setup. Never copy it over a live `data/` folder.
 
-Put a reverse proxy in front for TLS. There is no auth in v1. Bind to localhost or serve only inside your tailnet.
-
-## Containerize it yourself
-
-The repo ships no Docker files. Recreate them with this recipe when you need an image.
-
-Minimal multi stage Dockerfile. Build the SPA, build the release binary, copy both into a slim runtime with a seed copy.
+The backend finds the SPA in `./public`, `/app/public`, `frontend/dist`, or `../frontend/dist`. These paths are relative to your start folder, so a systemd unit needs `WorkingDirectory`. A simple unit for autostart:
 
 ```
-FROM node:22-alpine AS web
-WORKDIR /web
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm install
-COPY frontend/ ./
-RUN npm run build
+[Unit]
+Description=Weft homelab map
+After=network.target
 
-FROM rust:1-bookworm AS api
-WORKDIR /api
-COPY backend/Cargo.toml backend/Cargo.lock* ./
-COPY backend/src ./src
-RUN cargo build --release
+[Service]
+User=weft
+WorkingDirectory=/srv/weft
+Environment=DATA_DIR=/srv/weft/data PORT=3000
+ExecStart=/srv/weft/weft
+Restart=on-failure
 
-FROM debian:bookworm-slim
-RUN useradd -m app && mkdir -p /app/public /app/seed /data && chown -R app:app /app /data
-COPY --from=web /web/dist /app/public
-COPY --from=api /api/target/release/weft /app/weft
-COPY seed/graph.yaml /app/seed/graph.yaml
-COPY seed/nodes /app/seed/nodes
-USER app
-WORKDIR /app
-ENV PORT=3000 DATA_DIR=/data
-EXPOSE 3000
-CMD sh -c 'if [ ! -f /data/graph.yaml ]; then cp /app/seed/graph.yaml /data/graph.yaml; mkdir -p /data/nodes /data/assets; cp /app/seed/nodes/*.md /data/nodes/; fi; exec /app/weft'
+[Install]
+WantedBy=multi-user.target
 ```
 
-Run it with a volume. First start seeds `/data` from the sample. Later starts keep the volume.
+Put a reverse proxy in front for TLS. There is no auth in v1. The backend always listens on `0.0.0.0:PORT` and has no localhost-only option, so restrict access at the proxy or firewall, or serve only inside your tailnet.
+
+## Container image
+
+The repo ships a `Dockerfile`. Build it from the repo root:
 
 ```
 docker build -t weft:0.1.0 .
 docker run --rm -p 3000:3000 -v weft-data:/data weft:0.1.0
 ```
 
-For k3s push the image to a registry your cluster can read, then create a 1 Gi PVC, a single replica Deployment with `DATA_DIR=/data` and the PVC mounted at `/data`, plus a ClusterIP Service on port 80 to target 3000. Keep the Service inside the tailnet.
+First start seeds `/data` from the sample. Later starts keep the volume. The image runs as non-root user `app` and writes to `/data`, so the mount must be writable by uid 1000.
+
+Any orchestrator must mount writable storage at `/data` for uid 1000, and use `GET /api/state` for health checks. The backend has no `/health` endpoint. There is no auth in v1, so keep the app inside your tailnet.
 
 ## Use
 
