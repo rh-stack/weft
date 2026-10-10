@@ -1,0 +1,16 @@
+# live state: real IPs, notes, images. never commit.
+data/
+data-backup*/
+
+# build output
+backend/target/
+frontend/node_modules/
+frontend/dist/
+
+# local junk
+docs/
+.env
+.DS_Store
+*.swp
+.idea/
+.vscode/

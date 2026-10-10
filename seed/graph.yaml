@@ -1,0 +1,94 @@
+version: 1
+areas:
+- id: area-network
+  title: Home network
+  rect:
+    x: 249.0
+    y: -21.0
+    w: 722.0
+    h: 366.0
+- id: area-proxmox
+  title: Proxmox host
+  rect:
+    x: 10.0
+    y: 380.0
+    w: 960.0
+    h: 560.0
+nodes:
+- id: internet
+  x: 354.0
+  y: -5.0
+  areaId: null
+  parentId: null
+- id: router
+  x: 355.0
+  y: 192.0
+  areaId: null
+  parentId: null
+- id: wifi-ap
+  x: 706.0
+  y: 192.0
+  areaId: null
+  parentId: null
+- id: server
+  x: 330.0
+  y: 420.0
+  areaId: null
+  parentId: null
+- id: debian-vm
+  x: 34.0
+  y: 669.0
+  areaId: null
+  parentId: server
+- id: adguard-lxc
+  x: 355.0
+  y: 662.0
+  areaId: null
+  parentId: server
+- id: tailscale-lxc
+  x: 684.0
+  y: 666.0
+  areaId: null
+  parentId: server
+- id: app-demo
+  x: 684.0
+  y: 829.0
+  areaId: null
+  parentId: debian-vm
+edges:
+- id: e-wan
+  from: internet
+  to: router
+  label: fiber
+  sourceHandle: null
+  targetHandle: null
+- id: e-lan
+  from: router
+  to: server
+  label: LAN
+  sourceHandle: null
+  targetHandle: null
+- id: e-vm
+  from: server
+  to: debian-vm
+  label: vm
+  sourceHandle: null
+  targetHandle: null
+- id: e-dns
+  from: server
+  to: adguard-lxc
+  label: lxc
+  sourceHandle: null
+  targetHandle: null
+- id: e-tail
+  from: server
+  to: tailscale-lxc
+  label: lxc
+  sourceHandle: null
+  targetHandle: null
+- id: e-mv2a4led
+  from: router
+  to: wifi-ap
+  label: LAN
+  sourceHandle: r
+  targetHandle: l
