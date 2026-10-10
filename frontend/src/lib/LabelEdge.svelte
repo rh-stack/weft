@@ -82,6 +82,7 @@
   /* Label button and rename input share one box, so the text does not move on click. */
   .elabel,
   .elabel-edit {
+    display: inline-block;
     box-sizing: border-box;
     height: 24px;
     margin: 0;

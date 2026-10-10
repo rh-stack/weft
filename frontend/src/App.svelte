@@ -746,6 +746,7 @@
       {edgeTypes}
       fitView
       fitViewOptions={{ padding: 0.3 }}
+      proOptions={{ hideAttribution: true }}
       colorMode={$theme}
       ariaLabelConfig={{ 'controls.fitView.ariaLabel': 'Fit view (F)', 'controls.interactive.ariaLabel': 'Toggle interactivity (L)' }}
       nodesDraggable={!locked}
