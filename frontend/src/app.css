@@ -157,13 +157,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .kv.drop-above::before { top: -4px; }
 .kv.drop-below::after { bottom: -4px; }
 .stage.locked .svelte-flow__handle { display: none; }
-.island .searchrow { display: flex; gap: 6px; align-items: center; }
-.lockbtn {
-  flex: none; width: 28px; height: 28px; border: 1px solid transparent; border-radius: 6px;
-  background: none; font-size: 14px; line-height: 1; padding: 0;
-}
-.lockbtn:hover { background: rgba(79, 124, 255, 0.12); border-color: var(--accent); }
-.lockbtn[aria-pressed='true'] { background: rgba(79, 124, 255, 0.16); border-color: var(--accent); }
 .kv input { border: none; background: transparent; padding: 5px 4px; width: 100%; font-size: 13px; }
 .kv input:nth-child(2) { color: var(--muted); font-weight: 600; }
 .kv input:nth-child(3) { border-left: 1px solid #dfe2e8; padding-left: 12px; border-radius: 0; }
@@ -177,9 +170,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .kv:hover .remove { opacity: 1; }
 .remove:hover { color: #b42318; background: rgba(180, 35, 24, 0.08); }
 .fields > .btn { justify-self: start; border-style: dashed; }
-.tabs { display: flex; gap: 6px; margin: 10px 0; }
-.tabs button { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 4px 12px; }
-.tabs button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .colorrow { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
 .sw {
   width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border);
@@ -188,7 +178,3 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .sw:hover { border-color: var(--accent); }
 .sw.on { border-color: var(--accent); }
-.preview table { border-collapse: collapse; }
-.preview th, .preview td { border: 1px solid var(--border); padding: 4px 8px; }
-.preview pre { background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px; overflow: auto; }
-.err { color: #b42318; font-size: 12px; }

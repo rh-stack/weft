@@ -4,6 +4,8 @@
   import '@xyflow/svelte/dist/style.css';
   import NodeCard from './lib/NodeCard.svelte';
   import LabelEdge from './lib/LabelEdge.svelte';
+  import { nodePanel, setNodePanel } from './lib/nodePanel';
+  import { get } from 'svelte/store';
   import LockSync from './lib/LockSync.svelte';
   import FlowHotkeys from './lib/FlowHotkeys.svelte';
   import { flip } from 'svelte/animate';
@@ -32,7 +34,6 @@
   let selectedId: string | null = null;
   let selectedEdgeId: string | null = null;
   let locked = false;
-  // key-value row drag reorder
   let dragField = -1;
   let dropAt = -1;
   function startFieldDrag(e: DragEvent, i: number) {
@@ -82,8 +83,15 @@
   let flowWrap: HTMLDivElement;
   let showHelp = false;
 
-  // right-click menu
-  let menu: { x: number; y: number; kind: 'pane' | 'node' | 'area'; nodeId?: string; areaId?: string } | null = null;
+  let menu: { x: number; y: number; kind: 'pane' | 'area'; areaId?: string } | null = null;
+  // Attached node action flap: side depends on free space under the node.
+  // Open/close state lives in the shared nodePanel store (see lib/nodePanel.ts).
+  function panelSideFor(n: { id: string; y: number }): 'below' | 'above' {
+    const z = viewport.zoom || 1;
+    const s = nodeSizes.get(n.id) ?? { w: 240, h: 100 };
+    const h = flowWrap ? flowWrap.clientHeight : innerHeight;
+    return viewport.y + (n.y + s.h) * z + 44 <= h ? 'below' : 'above';
+  }
   // Edge label inline edit. The caption swaps for an input in place.
   let editingEdge: { id: string } | null = null;
   function startEdgeEdit(id: string) {
@@ -109,7 +117,6 @@
     rebuildFlow();
   }
 
-  // area inline rename
   let renamingArea: string | null = null;
   let renameVal = '';
   function commitRename() {
@@ -121,7 +128,6 @@
     renamingArea = null;
   }
 
-  // notes popover: single Milkdown markdown mode with autosave
   let openId: string | null = null;
   let editTitle = '';
   let editType = '';
@@ -268,6 +274,7 @@
   function onDragStart() {
     dragging = true;
     menu = null;
+    setNodePanel(null);
     guides = [];
     if (flowWrap) nodeSizes = readNodeSizesFromDom(flowWrap);
     if (syncTimer) clearTimeout(syncTimer);
@@ -388,7 +395,11 @@
     if (id && !id.startsWith('area-')) {
       selectedId = id;
       selectedEdgeId = null;
-      menu = { x: e.clientX, y: e.clientY, kind: 'node', nodeId: id };
+      selectedAreaId = null;
+      menu = null;
+      if (flowWrap) nodeSizes = readNodeSizesFromDom(flowWrap);
+      const pn0 = state ? state.nodes.find((x) => x.id === id) : undefined;
+      setNodePanel(pn0 ? { id, side: panelSideFor(pn0) } : null);
     } else {
       menu = { x: e.clientX, y: e.clientY, kind: 'pane' };
     }
@@ -433,6 +444,7 @@
 
   function deleteSelection() {
     if (!state) return;
+    setNodePanel(null);
     if (selectedEdgeId) {
       const edge = state.edges.find((e) => e.id === selectedEdgeId);
       if (edge) remember({ kind: 'edge', edge });
@@ -553,6 +565,7 @@
     }
     if (e.key === 'Escape') {
       menu = null;
+      setNodePanel(null);
       if (openId) closeNotes();
     }
   }
@@ -598,6 +611,7 @@
     }
     openId = id;
     menu = null;
+    setNodePanel(null);
     ensureEditor();
   }
 
@@ -635,7 +649,6 @@
     if (pendingReload) load();
   }
 
-  // area background layer: move and resize grips
   function gripDown(e: PointerEvent, id: string, mode: 'move' | 'resize') {
     if (locked) return;
     e.stopPropagation();
@@ -687,15 +700,17 @@
   }
 
   function onWinDown(e: PointerEvent) {
-    if (!menu) return;
+    if (!menu && !get(nodePanel)) return;
     if ((e.button === 2)) return;
     const t = e.target as HTMLElement;
-    if (t.closest && t.closest('.ctxmenu')) return;
+    if (t.closest && (t.closest('.ctxmenu') || t.closest('.nodepanel'))) return;
     menu = null;
+    setNodePanel(null);
   }
 
   onMount(() => {
     window.addEventListener('open-node', ((e: CustomEvent<string>) => openNotes(e.detail)) as EventListener);
+    window.addEventListener('delete-node', ((e: CustomEvent<string>) => { selectedId = e.detail; deleteSelection(); }) as EventListener);
     window.addEventListener('edit-edge', ((e: CustomEvent<string>) => startEdgeEdit(e.detail)) as EventListener);
     window.addEventListener('commit-edge', ((e: CustomEvent<{ id: string; value: string }>) => commitEdge(e.detail.id, e.detail.value)) as EventListener);
     window.addEventListener('cancel-edge', ((e: CustomEvent<string>) => cancelEdgeEdit(e.detail)) as EventListener);
@@ -737,7 +752,7 @@
       onnodeclick={onNodeClick}
       onedgeclick={onEdgeClick}
       onpaneclick={onPaneClick}
-      onmovestart={() => (menu = null)}
+      onmovestart={() => { menu = null; setNodePanel(null); }}
       onconnect={onConnect}
     >
       <Controls showZoom={false} fitViewOptions={{ padding: 0.3 }}>
@@ -840,9 +855,6 @@
     {#if m.kind === 'pane'}
       <button on:click={() => addNodeAt(m.x, m.y, 'New node', 'note')}>Add node</button>
       <button on:click={() => addAreaAt(m.x, m.y, 'New area')}>Add area</button>
-    {:else if m.kind === 'node'}
-      <button on:click={() => { if (m.nodeId) openNotes(m.nodeId); }}>Open notes</button>
-      <button on:click={() => { const id = m.nodeId; menu = null; if (id) { selectedId = id; deleteSelection(); } }}>Delete</button>
     {:else}
       {#if !locked}
       <button

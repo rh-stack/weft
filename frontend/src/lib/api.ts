@@ -1,6 +1,5 @@
 export type Rect = { x: number; y: number; w: number; h: number };
 export type Area = { id: string; title: string; rect: Rect };
-export type NodeLayout = { id: string; x: number; y: number; areaId?: string | null; parentId?: string | null };
 export type Edge = {
   id: string;
   from: string;

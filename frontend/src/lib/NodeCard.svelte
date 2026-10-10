@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Handle, Position } from '@xyflow/svelte';
+  import { nodePanel } from './nodePanel';
   export let data: {
     id: string;
     title: string;
@@ -16,16 +17,25 @@
   }
 
   $: entries = Object.entries(data.fields ?? {}).slice(0, 6);
+  $: flap = $nodePanel && $nodePanel.id === data.id ? $nodePanel.side : null;
 
   function isLink(v: unknown): boolean {
     return /^https?:\/\//i.test(String(v ?? ''));
   }
 </script>
 
+{#snippet actions()}
+  <div class="nodepanel">
+    <button class="nodrag" on:click|stopPropagation={() => open(data.id)}>Open</button>
+    <button class="nodrag danger" on:click|stopPropagation={() => window.dispatchEvent(new CustomEvent('delete-node', { detail: data.id }))}>Delete</button>
+  </div>
+{/snippet}
+
 <div
-  class="card {selected ? 'selected' : ''} {data.dimmed ? 'dimmed' : ''}"
+  class="card {selected ? 'selected' : ''} {data.dimmed ? 'dimmed' : ''} {flap ? 'flap-' + flap : ''}"
   style="background: {data.color ?? '#ffffff'}"
 >
+  {#if flap === 'above'}{@render actions()}{/if}
   <Handle type="target" position={Position.Top} class="conn" />
   <Handle type="target" position={Position.Left} id="l" class="conn side" />
   <div class="head">
@@ -57,6 +67,7 @@
   {/if}
   <Handle type="source" position={Position.Bottom} class="conn" />
   <Handle type="source" position={Position.Right} id="r" class="conn side" />
+  {#if flap === 'below'}{@render actions()}{/if}
 </div>
 
 <style>
@@ -100,10 +111,28 @@
   }
   .kid:hover { background: rgba(79, 124, 255, 0.14); border-color: #4f7cff; color: #2f54c9; }
   .kid:active { background: rgba(79, 124, 255, 0.24); border-color: #2f54c9; color: #2f54c9; }
-  /* connection handles appear on hover or selection */
+  /* action row: fills the inner width of the card and sits on the card edge it opens from */
+  .nodepanel {
+    display: flex; height: 34px; margin: 10px -12px -10px; background: inherit;
+    border-style: solid; border-color: inherit; border-width: 1px 0 0 0; overflow: hidden;
+    font-size: 12px; cursor: default;
+  }
+  .card.flap-above .nodepanel { margin: -10px -12px 10px; border-width: 0 0 1px 0; }
+  .card.flap-below .nodepanel { border-radius: 0 0 9px 9px; }
+  .card.flap-above .nodepanel { border-radius: 9px 9px 0 0; }
+  .nodepanel button {
+    flex: 1; min-width: 0; border: none; background: none; border-radius: 0; color: #1c2333;
+    display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: inherit; padding: 0;
+  }
+  .nodepanel button + button { border-left-style: solid; border-left-width: 1px; border-left-color: inherit; }
+  .nodepanel button:hover { background: #eef2ff; color: #2f54c9; }
+  .nodepanel button.danger:hover { background: #fef3f2; color: #b42318; }
   .card :global(.conn) {
     opacity: 0; width: 12px; height: 12px; background: #4f7cff; border: 2px solid #fff;
   }
   .card:hover :global(.conn), .card.selected :global(.conn) { opacity: 1; }
+  .card.flap-above :global(.conn), .card.flap-below :global(.conn) {
+    visibility: hidden; pointer-events: none;
+  }
   .card :global(.conn.side) { width: 10px; height: 10px; }
 </style>

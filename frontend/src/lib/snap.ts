@@ -26,7 +26,7 @@ function sizeOf(id: string, sizes: Map<string, SnapSize>, node?: any): SnapSize 
   };
 }
 
-export function dragBounds(
+function dragBounds(
   draggedIds: Set<string>,
   nodes: any[],
   sizes: Map<string, SnapSize>,
