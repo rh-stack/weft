@@ -2,6 +2,8 @@
 
 Small single user homelab map. Canvas of nodes plus notes pages. All state is text files. No database exists. No login exists in v1, so keep the app inside your tailnet.
 
+![Weft canvas with areas for internet entry, a Proxmox host, and a k3s cluster](.github/screenshots/canvas-overview.png)
+
 ## Layout
 
 - `frontend/` is Svelte 5 plus Svelte Flow plus TypeScript. It builds a static SPA.
@@ -85,6 +87,8 @@ Any orchestrator must mount writable storage at `/data` for uid 1000, and use `G
 
 ## Use
 
+![Proxmox host area with typed, color coded node cards and their fields](.github/screenshots/area-closeup.png)
+
 - Drag cards to move them. Drag between the dots on cards to link them.
 - Right click empty canvas to add a node or area at that spot.
 - Double click a card, or its notes button, to open notes in a popover.
@@ -94,6 +98,8 @@ Any orchestrator must mount writable storage at `/data` for uid 1000, and use `G
 - Search lives on the island at the top left of the canvas. Slash focuses it. Enter with one match opens its notes.
 - Notes use a Markdown editor with autosave. Paste images straight in.
 - Nodes take one of five pastel colors from the dots on top of the notes popover.
+
+![Notes popover with type, parent, color, fields, and Markdown notes](.github/screenshots/notes-popover.png)
 
 ## AI file edits
 
